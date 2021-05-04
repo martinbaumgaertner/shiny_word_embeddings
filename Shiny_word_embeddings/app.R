@@ -1,6 +1,5 @@
 
 library(tidyverse)
-
 library(shinythemes)
 library(htmltools)
 library(formattable)
@@ -13,10 +12,11 @@ library(lubridate)
 # data<-lapply(list.files("Shiny_word_embeddings/data/models_matrix/",full.names = T,pattern="wordemb"),
 #              function (x) readRDS(x))
 # names(data)<-str_remove_all(list.files("Shiny_word_embeddings/data/models_matrix/",pattern="wordemb"),".Rds")
-
+# 
 # data_doc<-lapply(list.files("Shiny_word_embeddings/data/models_matrix/",full.names = T,pattern="docemb"),
 #                  function (x) readRDS(x))
 # names(data_doc)<-str_remove_all(list.files("Shiny_word_embeddings/data/models_matrix/",pattern="docemb"),".Rds")
+# dataset<-readRDS("Shiny_word_embeddings/data/models/dataset.Rds")
 
 data<-lapply(list.files("data/models_matrix/",full.names = T,pattern="wordemb"),
              function (x) readRDS(x))
@@ -108,6 +108,9 @@ ui <-navbarPage("Whatever it takes - to understand a central banker",
                )
                )
 
+# model<-"docemb_cb_fulldoc2vecPVDM300"
+# word<-"testdd;Draghi"
+# word<-"testddddddd"
 
 server <- function(input, output) {
     
@@ -132,25 +135,49 @@ server <- function(input, output) {
             relocate(Rank)
     }
     doc_embeddings_similar<-function(model,input){
-        as_tibble(text2vec::sim2(model,input),rownames="doc") %>%
+        as_tibble(text2vec::sim2(model,t(input)),rownames="doc") %>%
             rename(Similarity=V1,
                    doc_id=doc)
     }
+
     doc_embeddings_word<-function(model,word){
+        
+        if(str_detect(word,";")){
+            word<-c(str_split(word,";",simplify = T))
+        }
         
         word<-tolower(word)
         doc_model<-data_doc[[model]]
         word_model<-data[[str_replace(model,"docemb","wordemb")]]
-        rownumber<-which(rownames(word_model)==word)
+        rownumber<-which(rownames(word_model)%in%word)
         if(length(rownumber)==0){
             message("Word does not exist in Corpus")
-            return(tibble("doc_id"=NA,"Similarity"=NA,"date"=NA,"type"=NA,"speaker"=NA,"cb"=NA,"currency"=NA,"year"=NA))
+            return(sim_list%>%
+                       reduce(inner_join, by = "doc_id")%>%
+                       rename_with(~paste0("Similarity_",names(sim_list)),-c("doc_id"))%>% 
+                       pivot_longer(!doc_id,names_to = "word",names_prefix = "Similarity_",values_to = "Similarity")%>% 
+                       left_join(dataset %>%
+                                     select(doc_id,date,type,speaker,cb,currency)%>% 
+                                     mutate(year=lubridate::year(date)),
+                                 by="doc_id")%>% 
+                       mutate(Similarity=0)) 
         }else{
-            input<-as.matrix(t(word_model[rownumber,]))
+            if(length(rownumber)==1){
+                input<-as.matrix(t(word_model[rownumber,]))
+            }else{
+                input<-as.matrix(word_model[rownumber,])
+            }
             
-            similar<-doc_embeddings_similar(doc_model,input)
+            sim_list<-list()
+            for(i in 1:nrow(input)){
+                sim_list[[i]]<-doc_embeddings_similar(doc_model,input[i,])
+            }
+            names(sim_list)<-rownames(word_model)[rownames(word_model)%in%word]
             
-            similar<-similar %>% 
+            similar<-sim_list%>%
+                reduce(inner_join, by = "doc_id")%>%
+                rename_with(~paste0("Similarity_",names(sim_list)),-c("doc_id"))%>% 
+                pivot_longer(!doc_id,names_to = "word",names_prefix = "Similarity_",values_to = "Similarity")%>% 
                 left_join(dataset %>%
                               select(doc_id,date,type,speaker,cb,currency)%>% 
                               mutate(year=lubridate::year(date)),
@@ -234,16 +261,13 @@ server <- function(input, output) {
             hide_legend('fill')%>%
             add_axis("x", title = "Dimension 1") %>%
             add_axis("y", title = "Dimension 2") %>%
-            #add_legend("stroke", title = "Won Oscar", values = c("Yes", "No")) %>%
-            #scale_nominal("stroke", domain = c("Yes", "No"),
-            #             range = c("orange", "#aaa")) %>%
             set_options(width = 2000, height = 1100)
     })
     vis %>% bind_shiny("umap_plot")
     
     output$collocation = DT::renderDataTable({collocations %>% 
             select(-count_nested,-length)})
-    
+
     doc_sim<-reactive({
         
         model<-input$model_doc
@@ -281,34 +305,38 @@ server <- function(input, output) {
             
             m <- as.data.frame(m)
             
-            m
-        
+            # if(nrow(m)==0){
+            #     return(data.frame("doc_id"=c(1,2,3,4,5,6),"word"=c("wrong_input",),"Similarity"=c(1,1,1,1,1,1),"date"=c(1:6)))
+            # }else{
+            #     return(m)
+            # }
+        m
     })
-    
+
     vis_doc <- reactive({
-            if(input$plot_type=="Point"){
+        
+        if(input$plot_type=="Point"){
                 fill_variable<- prop("fill",as.name(input$color_doc))
-                
-                doc_sim%>% 
+
+                doc_sim%>%
                     ggvis(~date,~Similarity) %>%
                     layer_points(size := 50, size.hover := 200,
                                  fillOpacity := 0.2, fillOpacity.hover := 0.5,
                                  fill = fill_variable, key := ~doc_id)%>%
-                    add_tooltip(tooltip, "hover") %>% 
+                    add_tooltip(tooltip, "hover") %>%
                     hide_legend('fill')%>%
                     add_axis("x", title = "Date") %>%
                     add_axis("y", title = "Similarity") %>%
                     set_options(width = 2000, height = 1100)
             }else{
-                doc_sim%>% 
+                doc_sim%>%
                     ggvis(~date,~Similarity) %>%
-                    layer_smooths()%>%
+                    group_by(word) %>%
+                    layer_smooths(stroke=~word)%>%
                     add_axis("x", title = "Date") %>%
                     add_axis("y", title = "Similarity") %>%
                     set_options(width = 2000, height = 1100)
                 }
-        
-        
     })
     vis_doc %>% bind_shiny("doc_plot")
     output$word <- renderText({ paste("You have selected:", input$searchword_doc, "(",nrow(doc_sim()),"Datapoints)") })
