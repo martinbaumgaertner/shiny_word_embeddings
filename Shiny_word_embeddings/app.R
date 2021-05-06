@@ -152,15 +152,15 @@ server <- function(input, output) {
         rownumber<-which(rownames(word_model)%in%word)
         if(length(rownumber)==0){
             message("Word does not exist in Corpus")
-            return(sim_list%>%
-                       reduce(inner_join, by = "doc_id")%>%
-                       rename_with(~paste0("Similarity_",names(sim_list)),-c("doc_id"))%>% 
-                       pivot_longer(!doc_id,names_to = "word",names_prefix = "Similarity_",values_to = "Similarity")%>% 
-                       left_join(dataset %>%
-                                     select(doc_id,date,type,speaker,cb,currency)%>% 
-                                     mutate(year=lubridate::year(date)),
-                                 by="doc_id")%>% 
-                       mutate(Similarity=0)) 
+
+            similar<-tibble(doc_id=paste0("doc_",1:10),
+                                    Similarity=0,
+                            word=word)%>% 
+                left_join(dataset %>%
+                              select(doc_id,date,type,speaker,cb,currency)%>% 
+                              mutate(year=lubridate::year(date)),
+                          by="doc_id")
+            return(similar)
         }else{
             if(length(rownumber)==1){
                 input<-as.matrix(t(word_model[rownumber,]))
