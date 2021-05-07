@@ -155,7 +155,7 @@ server <- function(input, output) {
 
             similar<-tibble(doc_id=paste0("doc_",1:10),
                                     Similarity=0,
-                            word=word)%>% 
+                            word=word[1])%>% 
                 left_join(dataset %>%
                               select(doc_id,date,type,speaker,cb,currency)%>% 
                               mutate(year=lubridate::year(date)),
@@ -272,7 +272,7 @@ server <- function(input, output) {
         
         model<-input$model_doc
         word<-input$searchword_doc
-        
+
         similar<-doc_embeddings_word(model,word)
             minyear <- input$year_doc[1]
             maxyear <- input$year_doc[2]
@@ -305,12 +305,12 @@ server <- function(input, output) {
             
             m <- as.data.frame(m)
             
-            # if(nrow(m)==0){
-            #     return(data.frame("doc_id"=c(1,2,3,4,5,6),"word"=c("wrong_input",),"Similarity"=c(1,1,1,1,1,1),"date"=c(1:6)))
-            # }else{
-            #     return(m)
-            # }
-        m
+            if(nrow(m)==0){
+                return(data.frame("doc_id"=c(1,2,3,4,5,6),"word"=c("wrong_input"),"Similarity"=c(1,1,1,1,1,1),"date"=c(1:6)))
+            }else{
+                return(m)
+            }
+        #m
     })
 
     vis_doc <- reactive({
