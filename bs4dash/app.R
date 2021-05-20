@@ -43,7 +43,7 @@ ui <- dashboardPage(
     fullscreen = TRUE,
     header=dashboardHeader(
         title = dashboardBrand(
-            title = "Whatever it takes to understand a central banker",
+            title = HTML("Whatever it takes to<br/>understand a central banker"),
             color = "danger",
             href = "https://divadnojnarg.github.io/outstanding-shiny-ui/",
             image = "https://adminlte.io/themes/AdminLTE/dist/img/user2-160x160.jpg",
