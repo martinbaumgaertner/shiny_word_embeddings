@@ -139,6 +139,7 @@ ui <- dashboardPage(
                 fluidRow(
                     box(width = 1,
                         textInput("searchword_doc", "Word", value = "inflation", width = NULL, placeholder = NULL),
+                        "Words can be linked by `;`",
                         selectInput("model_doc", "Model:",names(data_doc),selected=names(data_doc)[1]),
                         radioButtons("plot_type","Plot type:",c("Point","Smooth"),selected = "Smooth")
                         ),
