@@ -86,7 +86,8 @@ doc_data<-lapply(list.files("bs4dash/data/models_matrix/",full.names = T,pattern
 names(doc_data)<-str_remove_all(list.files("bs4dash/data/models_matrix/",pattern="docemb"),".Rds")
 uma<-umap(doc_data[[1]])
 docs<-uma$layout %>% 
-  as_tibble(rownames = "doc_id")
+  as_tibble(rownames = "doc_id")%>% 
+  filter(V1>-100&V2>-90)
 
 dataset<-readRDS("bs4dash/data/models/dataset.Rds")
 
@@ -96,6 +97,3 @@ umap_data<-left_join(docs,dataset,by="doc_id") %>%
   mutate(year=year(date))
 
 saveRDS(umap_data,paste0("bs4dash/data/models/umap_data.Rds"))
-
-bs4dash
-
