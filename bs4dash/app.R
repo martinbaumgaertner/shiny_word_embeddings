@@ -46,7 +46,7 @@ ui <- dashboardPage(
             title = HTML("Whatever it takes to<br/>understand a central banker"),
             color = "danger",
             href = "https://divadnojnarg.github.io/outstanding-shiny-ui/",
-            image = "https://adminlte.io/themes/AdminLTE/dist/img/user2-160x160.jpg",
+            #image = "https://adminlte.io/themes/AdminLTE/dist/img/user2-160x160.jpg",
             opacity = 0.8
         ),
         status="danger"
@@ -66,8 +66,8 @@ ui <- dashboardPage(
                          menuItem("Collocations",tabName = "Collocations",icon = icon("link",lib = "font-awesome")),
                          menuItem("Umap",tabName = "Umap",icon = icon("map",lib = "font-awesome")),
                          menuItem("Doc2Vec",tabName = "Doc2Vec",icon = icon("chart-line",lib = "font-awesome")),
-                         sidebarHeader("Contact"),
-                         menuItem("Authors",tabName = "Authors",icon = icon("id-card"))
+                         #sidebarHeader("Contact"),
+                         menuItem("Paper",tabName = "Info",icon = icon("id-card"))
                      )),
     controlbar = dashboardControlbar(
         id = "controlbar",
@@ -108,13 +108,17 @@ ui <- dashboardPage(
                     box(title="Similarity",
                         closable = F,
                         width=10,
-                        formattableOutput("similarity_table"))
+                        formattableOutput("similarity_table"),
+                        "The table shows the most similar terms to the target word according to the cosine distance of the underlying word embeddings")
                     )
                 ),
             bs4TabItem(
                 tabName = "Collocations",
                 fluidPage(
-                    DT::dataTableOutput("collocation")
+                    DT::dataTableOutput("collocation"),
+                    p("Collocations based on:"), 
+                    p("Blaheta, D., & Johnson, M. (2001, July). Unsupervised learning of multi-word verbs. In Proceedings of the 39th Annual Meeting of the ACL (pp. 54-60)."),
+                    p("Benoit K, Watanabe K, Wang H, Nulty P, Obeng A, Müller S, Matsuo A (2018). “quanteda: An R package for the quantitative analysis of textual data.” Journal of Open Source Software, 3(30), 774. doi: 10.21105/joss.00774, https://quanteda.io.")
                     )
                 ),
             bs4TabItem(
@@ -124,7 +128,9 @@ ui <- dashboardPage(
                         width=12,
                         height="90vh",
                         overflow = F,
-                        ggvisOutput("umap_plot")
+                        ggvisOutput("umap_plot"),
+                        p("UMAP decomposition based on:"),
+                        p("McInnes, L., Healy, J., & Melville, J. (2018). Umap: Uniform manifold approximation and projection for dimension reduction. arXiv preprint arXiv:1802.03426.")
                     )
                 )
             ),
@@ -144,8 +150,33 @@ ui <- dashboardPage(
                         ggvisOutput("doc_plot")
                         )
                 )
-                )
+                ),
+            bs4TabItem(
+              tabName = "Info",
+              fluidRow(
+                    box(title ="Paper", 
+                            "Baumgärtner, Martin & Zahner, Johannes (2021). Whatever it takes to understand a central banker - Embedding their words using neural networks.",
+                            icon = icon("credit-card")),
+                    status = "primary"
+                    )#,
+              # userBox(
+              #   id = "userbox",
+              #   title = userDescription(
+              #     title = "Johannes Zahner",
+              #     subtitle = "Research Assistant Philipps University Marburg",
+              #     type = 2,
+              #     image = "https://scholar.googleusercontent.com/citations?view_op=view_photo&user=3ZPPM8EAAAAJ&citpid=1",
+              #   ),
+              #   status = "primary",
+              #   gradient = TRUE,
+              #   background = "primary",
+              #   boxToolSize = "xl",
+              #   footer = "The footer here!",
+              #   collapsible = FALSE
+              # )
+              )
             )
+            
         ),
     dashboardFooter(
         fixed = FALSE,
@@ -156,6 +187,8 @@ ui <- dashboardPage(
         right = "2021"
     )
     )
+
+
 
 server <- function(input, output) {
     
