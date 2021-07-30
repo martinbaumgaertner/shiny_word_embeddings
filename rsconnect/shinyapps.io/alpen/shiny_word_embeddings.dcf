@@ -1,0 +1,11 @@
+name: shiny_word_embeddings
+title:
+username:
+account: alpen
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4423485
+bundleId: 4856144
+url: https://alpen.shinyapps.io/shiny_word_embeddings/
+when: 1627288372.98716
+lastSyncTime: 1627288372.98716
